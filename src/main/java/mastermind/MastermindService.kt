@@ -2,9 +2,8 @@ package mastermind
 
 import java.util.*
 
-class MastermindService(val randomGameGenerator: () -> Mastermind) {
+class MastermindService(val randomGameGenerator: () -> Mastermind, val repository: MastermindRepository) {
     val gamesStatuses = HashMap<String, List<Move>>()
-    val games = HashMap<String, Mastermind>()
 
     fun makeMove(id: String, guess: List<Int>): GameStatus {
         return GameStatus(addMoveToProperGame(id, guess))
@@ -18,7 +17,7 @@ class MastermindService(val randomGameGenerator: () -> Mastermind) {
     }
 
     private fun createMove(id: String, guess: List<Int>): Move {
-        val match = games.getOrPut(id, randomGameGenerator).findMatch(ColorSet.from(guess))
+        val match = repository.getOrNewGame(id, randomGameGenerator).findMatch(ColorSet.from(guess))
         return Move(guess, match)
     }
 }

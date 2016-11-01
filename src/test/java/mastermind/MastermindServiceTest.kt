@@ -11,7 +11,7 @@ class MastermindServiceTest {
     fun shouldMovesContainsFirstGuess() {
         val mastermind = Mastermind(ColorSet(0, 1, 1, 1))
         val guess = listOf(0, 0, 0, 0)
-        Assert.assertEquals(guess, MastermindService({ mastermind }).makeMove("id", guess).moves.first().guess)
+        Assert.assertEquals(guess, createMastermindService({ mastermind }).makeMove("id", guess).moves.first().guess)
     }
 
     @Test
@@ -19,7 +19,7 @@ class MastermindServiceTest {
         val mastermind = Mastermind(ColorSet(0, 1, 1, 1))
         val guess = listOf(0, 0, 0, 0)
         val matchResult = MatchResult(1, 0)
-        Assert.assertEquals(matchResult, MastermindService({ mastermind }).makeMove("id", guess).moves.first().match)
+        Assert.assertEquals(matchResult, createMastermindService({ mastermind }).makeMove("id", guess).moves.first().match)
     }
 
     @Test
@@ -27,14 +27,14 @@ class MastermindServiceTest {
         val mastermind = Mastermind(ColorSet(0, 0, 1, 1))
         val guess = listOf(0, 0, 0, 0)
         val match = MatchResult(2, 0)
-        Assert.assertEquals(match, MastermindService({ mastermind }).makeMove("id", guess).moves.first().match)
+        Assert.assertEquals(match, createMastermindService({ mastermind }).makeMove("id", guess).moves.first().match)
     }
 
     @Test
     fun shouldMovesContainsBothMoves() {
         val mastermind = Mastermind(ColorSet(0, 0, 0, 1))
         val guess = listOf(0, 0, 0, 0)
-        val service = MastermindService({ mastermind })
+        val service = createMastermindService({ mastermind })
         service.makeMove("id", guess)
         Assert.assertEquals(2, service.makeMove("id", guess).moves.size)
     }
@@ -43,7 +43,7 @@ class MastermindServiceTest {
     fun shouldMovesContainsMovesOnlyForSpecifyGame() {
         val mastermind = Mastermind(ColorSet(0, 0, 0, 1))
         val guess = listOf(0, 0, 0, 0)
-        val service = MastermindService({ mastermind })
+        val service = createMastermindService({ mastermind })
         service.makeMove("id", guess)
         Assert.assertEquals(1, service.makeMove("id2", guess).moves.size)
     }
@@ -54,9 +54,11 @@ class MastermindServiceTest {
         val randomGameGenerator = mock<Function0<Mastermind>>()
         whenever(randomGameGenerator.invoke()).thenReturn(mastermind).thenThrow(RuntimeException())
         val guess = listOf(0, 0, 0, 0)
-        val service = MastermindService(randomGameGenerator)
+        val service = createMastermindService(randomGameGenerator)
 
         service.makeMove("id", guess)
         Assert.assertEquals(2, service.makeMove("id", guess).moves.size)
     }
+
+    private fun createMastermindService(randomGameGenerator: () -> Mastermind) = MastermindService(randomGameGenerator, InMemoryMastermindRepository())
 }

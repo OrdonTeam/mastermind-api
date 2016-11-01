@@ -10,7 +10,7 @@ import java.util.*
 class MastermindController {
     private val random = { Random().nextInt() }
     private val randomGameGenerator = RandomGameGenerator(random)
-    private val mastermindService = MastermindService(randomGameGenerator)
+    private val mastermindService = MastermindService(randomGameGenerator, InMemoryMastermindRepository())
 
     @RequestMapping("/mastermind/{id}")
     fun makeMove(@PathVariable("id") id: String, @RequestParam("guess[]") guess: List<Int>): GameStatus {
