@@ -1,5 +1,6 @@
 package mastermind
 
+import com.google.common.reflect.TypeToken
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.database.DatabaseReference
@@ -7,17 +8,18 @@ import com.google.firebase.database.FirebaseDatabase
 import io.reactivex.Single
 import org.junit.Test
 import java.io.FileInputStream
+import java.util.*
 
 class RxFirebaseTest {
 
     @Test
     fun get() {
-        println(RxFirebase().getValue<ColorSet> { getReference("1").child("game") }.blockingGet())
+        println(getValue<HashMap<String, Move>>(RxFirebase().ref.getReference("2").child("moves"), object : TypeToken<HashMap<String, Move>>() {}.type).map { it.map { it.value } }.blockingGet())
     }
 
     @Test
     fun put() {
-        println(RxFirebase().putValue(ColorSet(1, 2, 3, 4)) { getReference("2").child("game") }.blockingGet())
+        println(RxFirebase().putValue(Move(listOf(1, 2, 3, 4), MatchResult(4, 0))) { getReference("2").child("moves").child(System.currentTimeMillis().toString()) }.blockingGet())
     }
 }
 
