@@ -3,7 +3,9 @@ package mastermind
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.database.*
+import com.google.gson.Gson
 import io.reactivex.Single
+import io.reactivex.SingleEmitter
 import java.io.FileInputStream
 import java.util.*
 
@@ -23,20 +25,7 @@ class FirebaseMastermindRepository : MastermindRepository {
     }
 
     private fun getGame(id: String): Single<Mastermind> {
-        return Single.create({ e ->
-            ref.getReference(id).child("game").addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val value = dataSnapshot.getHashMapStringInt()
-                    if (value != null) {
-                        e.onSuccess(value.toMastermind())
-                    } else {
-                        e.onError(NoSuchElementException())
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) = e.onError(error.toException())
-            })
-        })
+        return getValue<ColorSet>(ref.getReference(id).child("game")).map(::Mastermind)
     }
 
     private fun putNewGame(id: String, randomGameGenerator: () -> Mastermind): Single<Mastermind> {
@@ -107,4 +96,27 @@ class FirebaseMastermindRepository : MastermindRepository {
     private fun DataSnapshot.getHashMapStringInt() = getValue(object : GenericTypeIndicator<HashMap<String, Int>>() {})
 
     private fun DataSnapshot.getHashMapStringStringInt() = getValue(object : GenericTypeIndicator<HashMap<String, HashMap<String, Int>>>() {})
+
+    inline fun <reified T : Any> getValue(databaseReference: DatabaseReference, gson: Gson = Gson()): Single<T> {
+        return Single.create({ e ->
+            val valueEventListener = createRxValueEventListener(e, gson)
+            databaseReference.addListenerForSingleValueEvent(valueEventListener)
+            e.setCancellable { databaseReference.removeEventListener(valueEventListener) }
+        })
+    }
+
+    inline fun <reified T : Any> createRxValueEventListener(emitter: SingleEmitter<T>, gson: Gson): ValueEventListener {
+        return object : ValueEventListener {
+            override fun onCancelled(error: DatabaseError) = emitter.onError(error.toException())
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val value = snapshot.value
+                if (value != null) {
+                    emitter.onSuccess(gson.fromJson(gson.toJson(value), T::class.java))
+                } else {
+                    emitter.onError(NoSuchElementException())
+                }
+            }
+        }
+    }
 }
