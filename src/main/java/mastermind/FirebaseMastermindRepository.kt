@@ -24,7 +24,7 @@ class FirebaseMastermindRepository : MastermindRepository {
     }
 
     private fun getGame(id: String): Single<Mastermind> {
-        return getValue<ColorSet>(ref.getReference(id).child("game")).map(::Mastermind)
+        return ref.getReference(id).child("game").getValue<ColorSet>().map(::Mastermind)
     }
 
     private fun putNewGame(id: String, randomGameGenerator: () -> Mastermind): Single<Mastermind> {
@@ -43,7 +43,7 @@ class FirebaseMastermindRepository : MastermindRepository {
     }
 
     private fun getMoves(id: String): Single<List<Move>> {
-        return getValue<HashMap<String, Move>>(ref.getReference(id).child("moves"), object : TypeToken<HashMap<String, Move>>() {}.type)
+        return ref.getReference(id).child("moves").getValue(object : TypeToken<HashMap<String, Move>>() {})
                 .map { it.toSortedMap(Comparator<String>(String::compareTo)).map { it.value } }
     }
 }

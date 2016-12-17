@@ -5,6 +5,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import java.lang.reflect.Type
@@ -29,11 +30,11 @@ fun createDatabaseReferenceCompletionListener(emitter: SingleEmitter<Unit>): Dat
     }
 }
 
-inline fun <reified T : Any> getValue(databaseReference: DatabaseReference, gson: Gson = Gson()): Single<T> {
+inline fun <reified T : Any> DatabaseReference.getValue(gson: Gson = Gson()): Single<T> {
     return Single.create({ e ->
         val valueEventListener = createRxValueEventListener(e, gson)
-        databaseReference.addListenerForSingleValueEvent(valueEventListener)
-        e.setCancellable { databaseReference.removeEventListener(valueEventListener) }
+        addListenerForSingleValueEvent(valueEventListener)
+        e.setCancellable { removeEventListener(valueEventListener) }
     })
 }
 
@@ -47,11 +48,11 @@ inline fun <reified T : Any> createRxValueEventListener(emitter: SingleEmitter<T
     }
 }
 
-inline fun <reified T : Any> getValue(databaseReference: DatabaseReference, type: Type, gson: Gson = Gson()): Single<T> {
+inline fun <reified T : Any> DatabaseReference.getValue(type: TypeToken<T>, gson: Gson = Gson()): Single<T> {
     return Single.create({ e ->
-        val valueEventListener = createRxValueEventListener(e, type, gson)
-        databaseReference.addListenerForSingleValueEvent(valueEventListener)
-        e.setCancellable { databaseReference.removeEventListener(valueEventListener) }
+        val valueEventListener = createRxValueEventListener(e, type.type, gson)
+        addListenerForSingleValueEvent(valueEventListener)
+        e.setCancellable { removeEventListener(valueEventListener) }
     })
 }
 
