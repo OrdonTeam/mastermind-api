@@ -34,6 +34,8 @@ dependencies {
     testCompile('com.jayway.jsonpath:json-path')
     testCompile("com.nhaarman:mockito-kotlin:0.6.0")
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile 'com.google.firebase:firebase-admin:4.0.3'
+    compile 'io.reactivex.rxjava2:rxjava:2.0.2'
 }
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
