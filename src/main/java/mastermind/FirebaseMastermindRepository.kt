@@ -16,20 +16,20 @@ class FirebaseMastermindRepository : MastermindRepository {
             .build()
     private val app = FirebaseApp.initializeApp(options)
     private val ref = FirebaseDatabase.getInstance(app)
+    private val movesTypeToken: TypeToken<HashMap<String, Move>> = object : TypeToken<HashMap<String, Move>>() {}
 
     override fun getOrNewGame(id: String, randomGameGenerator: () -> Mastermind): Mastermind {
-        return getGame(id)
-                .onErrorResumeNext(putNewGame(id, randomGameGenerator))
+        return getOldGame(id)
+                .onErrorResumeNext{ putNewGame(id, randomGameGenerator()) }
                 .blockingGet()
     }
 
-    private fun getGame(id: String): Single<Mastermind> {
-        return ref.getReference(id).child("game").getValue<ColorSet>().map(::Mastermind)
+    private fun getOldGame(id: String): Single<Mastermind> {
+        return getGamesRef(id).getValue()
     }
 
-    private fun putNewGame(id: String, randomGameGenerator: () -> Mastermind): Single<Mastermind> {
-        val mastermind = randomGameGenerator.invoke()
-        return putValue(mastermind.code, ref.getReference(id).child("game")).map { mastermind }
+    private fun putNewGame(id: String, game: Mastermind): Single<Mastermind> {
+        return putValue(game, getGamesRef(id))
     }
 
     override fun addMove(id: String, newMove: Move): List<Move> {
@@ -38,12 +38,18 @@ class FirebaseMastermindRepository : MastermindRepository {
                 .blockingGet()
     }
 
-    private fun putMove(id: String, newMove: Move): Single<Unit> {
-        return putValue(newMove, ref.getReference(id).child("moves").child(System.currentTimeMillis().toString()))
+    private fun putMove(id: String, newMove: Move): Single<Move> {
+        return putValue(newMove, getNewMoveRef(id))
     }
 
     private fun getMoves(id: String): Single<List<Move>> {
-        return ref.getReference(id).child("moves").getValue(object : TypeToken<HashMap<String, Move>>() {})
+        return getMovesRef(id).getValue(movesTypeToken)
                 .map { it.toSortedMap(Comparator<String>(String::compareTo)).map { it.value } }
     }
+
+    private fun getNewMoveRef(id: String) = getMovesRef(id).child(System.currentTimeMillis().toString())
+
+    private fun getGamesRef(id: String) = ref.getReference(id).child("game")
+
+    private fun getMovesRef(id: String) = ref.getReference(id).child("moves")
 }

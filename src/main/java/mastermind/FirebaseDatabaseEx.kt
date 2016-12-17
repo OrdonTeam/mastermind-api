@@ -11,20 +11,20 @@ import io.reactivex.SingleEmitter
 import java.lang.reflect.Type
 
 
-fun <T> putValue(value: T, databaseReference: DatabaseReference): Single<Unit> {
+fun <T> putValue(value: T, databaseReference: DatabaseReference): Single<T> {
     return Single.create({ e ->
-        val completionListener = createDatabaseReferenceCompletionListener(e)
+        val completionListener = createDatabaseReferenceCompletionListener(e, value)
         databaseReference.setValue(value, completionListener)
     })
 }
 
-fun createDatabaseReferenceCompletionListener(emitter: SingleEmitter<Unit>): DatabaseReference.CompletionListener {
+fun <T> createDatabaseReferenceCompletionListener(emitter: SingleEmitter<T>, value: T): DatabaseReference.CompletionListener {
     return DatabaseReference.CompletionListener { error, p1 ->
         if (!emitter.isDisposed) {
             if (error != null) {
                 emitter.onError(error.toException())
             } else {
-                emitter.onSuccess(Unit)
+                emitter.onSuccess(value)
             }
         }
     }
